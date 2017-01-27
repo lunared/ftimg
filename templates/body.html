@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>FTMP3 - {{path or '/'}}</title>
+        <meta name=viewport content="width=device-width, initial-scale=1">
+        <style>
+            @keyframes marquee {
+                0%, 20%   { transform: translate(0%, 0); }
+                85%  { transform: translate(-100%, 0); }
+                86%  { transform: translate(-100%, 100%);}
+                87%, 95%  { transform: translate(-0%, 100%);}
+                100% { transform: translate(0%, 0); }
+            }
+
+            html, body {
+                padding: 0;
+                margin: 0;
+                background: black;
+                color: white;
+                font-family: monospace;
+            }
+
+            a {
+                color: white;
+            }
+
+            body.lock {
+                overflow: hidden;
+            }
+
+            .container {
+                width: 100%;
+                max-width: 960px;
+                margin: auto;
+                box-sizing: border-box;
+                padding: 0.83em;
+                margin-top: 40px;
+            }
+
+            .footer {
+              text-align: right;
+              margin-right: 2px;
+            }
+
+            nav {
+              position: fixed;
+              left: 0;
+              right: 0;
+              top: 0;
+              bottom: 0;
+              display: block;
+              overflow: auto;
+              height: 100%;
+              padding: 10px 0 10px 40px;
+              background: rgba(0,0,0,.8);
+              transition: opacity .2s linear;
+              opacity: 0;
+              pointer-events: none;
+              font-size: 20px;
+              font-family: monospace;
+            }
+
+            nav ul {
+              list-style: none;
+              margin: 0;
+            }
+            nav li {
+              margin: 6px 0px;
+            }
+
+            nav a, #controls a {
+              color: white;
+              text-decoration: none;
+            }
+
+            .paginator {
+                float: right;
+            }
+
+            #controls a.active {
+                text-decoration: underline;
+            }
+
+            body.show-nav {
+              overflow: hidden;
+            }
+
+            body.show-nav nav {
+              pointer-events: fill;
+              opacity: 1;
+            }
+
+            .clickable:hover {
+              cursor: pointer;
+            }
+
+            /**
+             * Info block
+             */
+            .info {
+                
+            }
+
+            .info .tag {
+
+            }
+
+            .info .thumbnail {
+                display: inline-block;
+                width: 250px;
+                margin-right: 10px;
+            }
+
+            .info .meta {
+                display: inline-block;
+                width: calc(100% - 270px);
+                vertical-align: top;
+                line-height: 1.7em;
+            }
+
+            .info .meta br {
+                line-height: .5rem;
+                display: block;
+            }
+
+            .info .meta label {
+                font-weight: bold;
+            }
+
+            /**
+             * Gallery block
+             */
+             .gallery {
+
+             }
+
+             .gallery td {
+                 text-align: center;
+             }
+
+             .gallery a:hover {
+                cursor: pointer;
+             }
+
+             /**
+              * Full-window view of a page in the gallery
+              */
+             .preview {
+                 position: fixed;
+                 top: 0;
+                 bottom: 0;
+                 left: 0;
+                 right: 0;
+                 text-align: middle;
+                 overflow: scroll;
+                 pointer-events: none;
+                 background: rgba(0,0,0,.8);
+                 transition: opacity .2s linear;
+                 opacity: 0;
+                 padding: 2rem;
+             }
+
+             .preview.show {
+                 pointer-events: fill;
+                 opacity: 1;
+             }
+
+             .preview img {
+                 max-width: 100%;
+             }
+        </style>
+
+    </head>
+    <body>
+        <div class="container">
+            <h2 onclick="document.body.classList.toggle('show-nav')" class="clickable">
+              {{path or '/'}}
+            </h2>
+
+            <div class="info">
+                <div class="thumbnail">
+                    <img src="{{meta["thumbnail"]}}" width="100%" />
+                </div>
+                <div class="meta">
+                    {% if is_dict(meta['title']) %}
+                        <label>Title: </label><span>{{ meta['title']['localized'] }}</span>
+                        <br/>
+                        <label>Native Title: </label><span>{{ meta['title']['native'] }}</span>
+                    {% else %}
+                        <label>Title: </label><span>{{ meta['title'] }}</span>
+                    {% endif %}
+                    <br/>
+                    <label>Artist(s): </label>
+                    {% for artist in meta['artist'] %}
+                        <span>{{ artist }}</span>
+                    {% endfor %}
+                    <br/>
+                    <label>Tags: </label>
+                    {% for tag in meta['tags'] %}
+                        <a href="#" class="tag">{{ tag }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+            <fieldset id="controls">
+                <legend>Controls</legend>
+                <label>
+                    Pagesize
+                    {% for ps in [10, 25, 50] %}
+                    <a href="{{'{}?page=1&pagesize={}'.format(path, ps)}}"
+                        {% if ps == pagesize %}
+                            class="active"
+                        {% endif %}
+                        >{{ ps }}</a>
+                    {% endfor %}
+                </label>
+                <label class='paginator'>
+                    <a href="{{'{}?page=1&pagesize={}'.format(path, pagesize)}}"><<</a>
+                    <a href="{{'{}?page={}&pagesize={}'.format(path, prevpage, pagesize)}}"><</a>
+                    {% for p in range(max(1, page-2), min(page+3, pages+1)) %}
+                    <a href="{{'{}?page={}&pagesize={}'.format(path, p, pagesize)}}"
+                        {% if p == page %}
+                            class="active"
+                        {% endif %}
+                    >{{p}}</a>
+                    {% endfor %}
+                    <a href="{{'{}?page={}&pagesize={}'.format(path, nextpage, pagesize)}}">></a>
+                    <a href="{{'{}?page={}&pagesize={}'.format(path, pages, pagesize)}}">>></a>
+                </label>
+            </fieldset>
+            <table class="gallery">
+                <tbody>
+                    {% for i in range((images|length) // 5) %}
+                    <tr>
+                        {% for image in images[i*5:min((i+1) * 5, (images|length))] %}
+                        <td>
+                            <a onclick="showImage('{{ image }}')">
+                                <img src="{{image}}" width="95%" />
+                            </a>
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <h6 class="footer"><a href="https://github.com/nhydock/ftimg">Powered by ftimg</a></h6>
+        </div>
+
+        <!-- directory tree navigation -->
+        <nav onclick="document.body.classList.remove('show-nav')">
+          <ul>
+          {% for directory in tree %}
+            <li>
+              <a href="/{{directory}}">/{{directory}}</a>
+            </li>
+          {% endfor %}
+          </ul>
+        </nav>
+
+        <div id="preview" class="preview" onclick="hidePreview()">
+            <div class="overlay"></div>
+            <img id="fullPreview" src="" />
+        </div>
+
+        <!-- full image previewer/gallery -->
+        <script>
+            function showImage(url) {
+                document.getElementById("fullPreview").src = url;
+                document.getElementById("preview").classList.add("show");
+                document.getElementsByTagName("body")[0].classList.add("lock");
+            }
+
+            function hidePreview() {
+                document.getElementById("preview").classList.remove("show");
+                document.getElementsByTagName("body")[0].classList.remove("lock");
+            }
+        </script>
+    </body>
+</html>
