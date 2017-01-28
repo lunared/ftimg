@@ -15,6 +15,11 @@ from urllib.parse import urlencode
 # for thumbnail importing
 from PIL import ExifTags, Image
 
+# for dir updating
+from watchdog.observers import Observer as FileObserver
+from watchdog.events import FileSystemEventHandler
+import time
+
 app = Flask(__name__,)
 
 """
@@ -174,6 +179,16 @@ def home(path=None):
     }), 200
 
 
+class RefreshDirTree(FileSystemEventHandler):
+    """
+    File System watcher that will refresh the cached
+    DIR_TREE whenever there is a change in the filesystem path
+    """
+
+    def on_any_event(self, event):
+        global DIR_TREE
+        DIR_TREE = get_dir_tree()
+
 if __name__ == '__main__':
     app.jinja_env.globals.update(min=min)
     app.jinja_env.globals.update(max=max)
@@ -182,3 +197,13 @@ if __name__ == '__main__':
     app.jinja_env.globals.update(urlencode=urlencode)
     app.run(debug=True, host='0.0.0.0', port=5000)
 
+    # watch for changes in the file system to update paths
+    file_dir_observer = FileObserver()
+    file_dir_observer.schedule(RefreshDirTree(), ROOT_DIRECTORY, recursive=True)
+    file_dir_observer.start()
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        file_dir_observer.stop()
+    file_dir_observer.join()
