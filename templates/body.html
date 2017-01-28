@@ -131,7 +131,7 @@
              * Gallery block
              */
              .gallery {
-
+                width: 100%;
              }
 
              .gallery td {
@@ -151,7 +151,7 @@
                  bottom: 0;
                  left: 0;
                  right: 0;
-                 text-align: middle;
+                 text-align: center;
                  overflow: scroll;
                  pointer-events: none;
                  background: rgba(0,0,0,.8);
@@ -179,7 +179,7 @@
 
             <div class="info">
                 <div class="thumbnail">
-                    <img src="{{meta["thumbnail"]}}" width="100%" />
+                    <img src="{{meta['thumbnail']}}" width="100%" />
                 </div>
                 <div class="meta">
                     {% if is_dict(meta['title']) %}
@@ -214,27 +214,27 @@
                     {% endfor %}
                 </label>
                 <label class='paginator'>
-                    <a href="{{'{}?page=1&pagesize={}'.format(path, pagesize)}}"><<</a>
-                    <a href="{{'{}?page={}&pagesize={}'.format(path, prevpage, pagesize)}}"><</a>
-                    {% for p in range(max(1, page-2), min(page+3, pages+1)) %}
-                    <a href="{{'{}?page={}&pagesize={}'.format(path, p, pagesize)}}"
-                        {% if p == page %}
+                    <a href="{{'{}?page=1&pagesize={}'.format(path, view['pagesize'])}}"><<</a>
+                    <a href="{{'{}?page={}&pagesize={}'.format(path, view['prevpage'], view['pagesize'])}}"><</a>
+                    {% for p in range(max(1, view['page']-2), min(view['page']+3, view['pages']+1)) %}
+                    <a href="{{'{}?page={}&pagesize={}'.format(path, p, view['pagesize'])}}"
+                        {% if p == view['page'] %}
                             class="active"
                         {% endif %}
                     >{{p}}</a>
                     {% endfor %}
-                    <a href="{{'{}?page={}&pagesize={}'.format(path, nextpage, pagesize)}}">></a>
-                    <a href="{{'{}?page={}&pagesize={}'.format(path, pages, pagesize)}}">>></a>
+                    <a href="{{'{}?page={}&pagesize={}'.format(path, view['nextpage'], view['pagesize'])}}">></a>
+                    <a href="{{'{}?page={}&pagesize={}'.format(path, view['pages'], view['pagesize'])}}">>></a>
                 </label>
             </fieldset>
             <table class="gallery">
                 <tbody>
-                    {% for i in range((images|length) // 5) %}
+                    {% for i in range((view['images']|length) // 5) %}
                     <tr>
-                        {% for image in images[i*5:min((i+1) * 5, (images|length))] %}
+                        {% for image in view['images'][i*5:min((i+1) * 5, (view['images']|length))] %}
                         <td>
-                            <a onclick="showImage('{{ image }}')">
-                                <img src="{{image}}" width="95%" />
+                            <a onclick="showImage('{{ image["path"] }}')">
+                                <img src="{{image['thumbnail']}}" width="95%" />
                             </a>
                         </td>
                         {% endfor %}
