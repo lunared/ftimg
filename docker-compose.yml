@@ -14,3 +14,7 @@ services:
      - ${GALLERY}:/media/:ro
     ports:
      - "${FTIMG_PORT}:80"
+  db:
+    image: mongo:3.4.1
+    volumes:
+      - ./db:/data/db

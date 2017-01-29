@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>FTIMG</title>
+        <meta name=viewport content="width=device-width, initial-scale=1">
+        <style>
+            @keyframes marquee {
+                0%, 20%   { transform: translate(0%, 0); }
+                85%  { transform: translate(-100%, 0); }
+                86%  { transform: translate(-100%, 100%);}
+                87%, 95%  { transform: translate(-0%, 100%);}
+                100% { transform: translate(0%, 0); }
+            }
+
+            html, body {
+                padding: 0;
+                margin: 0;
+                background: black;
+                color: white;
+                font-family: monospace;
+            }
+
+            a {
+                color: white;
+            }
+
+            body.lock {
+                overflow: hidden;
+            }
+
+            .container {
+                width: 100%;
+                max-width: 960px;
+                margin: auto;
+                box-sizing: border-box;
+                padding: 0.83em;
+                margin-top: 40px;
+            }
+
+            .footer {
+              text-align: right;
+              margin-right: 2px;
+            }
+
+            .paginator {
+                float: right;
+            }
+
+            #controls a, 
+            .gallery a {
+                text-decoration: none;
+            }
+
+            #controls a.active {
+                text-decoration: underline;
+            }
+
+            #controls .control-group {
+                display: inline-block;
+                vertical-align: middle;
+            }
+
+            body.show-nav {
+              overflow: hidden;
+            }
+
+            body.show-nav nav {
+              pointer-events: fill;
+              opacity: 1;
+            }
+
+            .clickable:hover {
+              cursor: pointer;
+            }
+
+            /**
+             * Gallery block
+             */
+             .gallery {
+                width: 100%;
+             }
+
+             .gallery td {
+                 text-align: left;
+                 padding: 8px;
+             }
+
+             .gallery tr:nth-child(even) {
+                background: rgba(255,255,255,.1);
+             }
+
+             .gallery a:hover {
+                cursor: pointer;
+             }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <fieldset id="controls">
+                <legend>Controls</legend>
+                <div class="control-group">
+                    <label>
+                        Pagesize
+                        {% for ps in [10, 25, 50] %}
+                        <a href="{{'{}?page=1&pagesize={}'.format(path, ps)}}"
+                            {% if ps == pagesize %}
+                                class="active"
+                            {% endif %}
+                            >{{ ps }}</a>
+                        {% endfor %}
+                    </label>
+                </div>
+                <form class="control-group" method="GET" action="/">
+                    <input type="text" name="search" value="{{search}}" />
+                    <button type="submit">
+                        Search
+                    </button>
+                </form>
+                <div class="control-group paginator">
+                    <a href="{{'{}?page=1&pagesize={}'.format(path, pagesize)}}"><<</a>
+                    <a href="{{'{}?page={}&pagesize={}'.format(path, prevpage, pagesize)}}"><</a>
+                    {% for p in range(max(1, page-2), min(page+3, pages+1)) %}
+                    <a href="{{'{}?page={}&pagesize={}'.format(path, p, pagesize)}}"
+                        {% if p == page %}
+                            class="active"
+                        {% endif %}
+                    >{{p}}</a>
+                    {% endfor %}
+                    <a href="{{'{}?page={}&pagesize={}'.format(path, nextpage, pagesize)}}">></a>
+                    <a href="{{'{}?page={}&pagesize={}'.format(path, pages, pagesize)}}">>></a>
+                </div>
+            </fieldset>
+            <table class="gallery">
+                <tbody>
+                    {% for g in galleries %}
+                        <tr>        
+                            <td>
+                                <a href="{{g['path']}}">
+                                    {{g['title']}}
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <h4 class="footer"><a href="https://github.com/nhydock/ftimg">Powered by ftimg</a></h4>
+        </div>
+    </body>
+</html>
