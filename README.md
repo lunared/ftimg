@@ -21,7 +21,7 @@ Alternatively, since this is a really simple app, you can just run it directly o
 pip install -r requirements.txt
 ``` 
 ```
-python app.py
+python wsgi.py
 ```
 
 You'll have to edit the app.py in this case to change the ftp directory.  It's also mapped to the default port 5000.

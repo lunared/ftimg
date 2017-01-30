@@ -3,3 +3,4 @@ gunicorn
 pyyaml
 pillow
 watchdog
+Flask-PyMongo

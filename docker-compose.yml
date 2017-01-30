@@ -2,19 +2,31 @@ version: '2'
 services:
   site:
     build: .
+    command: gunicorn -w 4 -b 0.0.0.0:5000 wsgi:app
     expose:
-     - "5000"
+      - "5000"
     volumes:
-     - ./:/var/www:ro
-     - ${GALLERY}:/var/www/gallery:ro
+      - ./:/var/www:ro
+      - ${GALLERY}:/var/www/gallery:ro
+    environment: 
+      - USE_MONGO=True
+      - MONGO_URL=db
+    depends_on:
+      - db
+    
   nginx:
     image: nginx:alpine
     volumes:
-     - ./nginx.conf:/etc/nginx/nginx.conf:ro
-     - ${GALLERY}:/media/:ro
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ${GALLERY}:/usr/share/nginx/html/
     ports:
-     - "${FTIMG_PORT}:80"
+      - "${FTIMG_PORT}:80"
+    depends_on:
+      - site
+     
   db:
     image: mongo:3.4.1
     volumes:
       - ./db:/data/db
+    ports:
+      - "27017:27017"

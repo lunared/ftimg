@@ -11,9 +11,10 @@ import base64
 import yaml
 import os
 import math
+import pymongo
 
 from PIL import ExifTags, Image
-from .app import mongo, app
+from .app import app, mongo
 
 class Gallery(object):
     """
@@ -37,8 +38,14 @@ class Gallery(object):
         return filepath
 
     @staticmethod
-    def generate_thumbnail(img):
+    def generate_thumbnail(file):
+        """
+        Uses PIL to generate a thumbnail for an image file
+
+        @param file: image file of a page in the gallery
+        """
         from io import BytesIO
+        img = Image.open(file)
         buffered = BytesIO()
         img.thumbnail((400, 400))
         img = img.convert(mode="RGB")
@@ -46,29 +53,6 @@ class Gallery(object):
         return "data:image/jpg;base64,{}".format(
             base64.b64encode(buffered.getvalue()).decode('utf-8').replace('\n', '')
         )
-
-    @staticmethod
-    def _read_exif(file):
-        """
-        Reads all existing exif tags from the image
-        In particular we'll be looking for thumbnail exif images
-
-        @return: dict of the exif tags on the image
-        """
-        img = Image.open(file)
-        try:
-            exif = {
-                ExifTags.TAGS[k]: v
-                for k, v in img._getexif().items()
-                if k in ExifTags.TAGS
-            }
-            if 'thumbnail' not in exif:
-                exif['thumbnail'] = Gallery.generate_thumbnail(img)
-            return exif
-        except Exception:
-            return {
-                'thumbnail': Gallery.generate_thumbnail(img)
-            }
 
     @staticmethod
     def _read_info(directory):
@@ -80,57 +64,70 @@ class Gallery(object):
         @return dict: metadata from the gallery.yml.  If no gallery.yml exists we default to
                     returning a dict with the title of the gallery being the filepath
         """
-        def read_from_file(directory):
+
+    def __init__(self, path):
+        self.path = path
+
+    @property
+    def filepath(self):
+        return os.path.join(app.config['ROOT_DIRECTORY'], self.path)
+
+    @property
+    def meta(self):
+        if app.config['USE_MONGO']:
+            return mongo.db.galleries.find_one({'_id': self.path})
+        else:
             try:
-                meta = yaml.load(open(os.path.join(directory, Gallery.INFO_FILE), 'r'))['gallery']
+                meta = {}
+                with open(os.path.join(self.filepath, Gallery.INFO_FILE), 'r') as gyml:
+                    meta = yaml.load(gyml)['gallery']
                 return meta
             except Exception as e:
                 return {
-                    'title': os.path.basename(directory.rstrip(os.path.sep)),
+                    'title': os.path.basename(self.filepath),
                 }
-
-        if app.config['USE_MONGO']:
-            try:
-                return mongo.db.galleries.find({'path': directory})
-            except Exception:
-                return read_from_file(directory)
-        else:
-            return read_from_file(directory)
-
-
-    def __init__(self, path):
-        self.path = os.path.join(app.config['ROOT_DIRECTORY'], path)
-        self.meta = Gallery._read_info(self.path)
 
     @property
     def files(self):
+        """
+        Discovers all files for the Gallery
+        """
         if app.config['USE_MONGO']:
-            return mongo.db.galleries.find({'path': self.path}, {'files.thumbnail': 1, 'files.path': 1})
+            files = mongo.db.pages.find(
+                {'gallery': self.path},
+                {'thumbnail': 1, '_id': 1}
+            ).sort([('_id', pymongo.ASCENDING)])
+            return files, files.count()
         else:
-            files = [f for f in os.listdir(self.path) if app.config['FORMAT_MATCH'].search(f)]
+            files = [f for f in os.listdir(self.filepath) if app.config['FORMAT_MATCH'].search(f)]
             files.sort()
-            return files
+            return [
+                {
+                    '_id': "{}{}".format(self.path, f)[len(app.config['ROOT_DIRECTORY']):],
+                    'thumbnail': Gallery.generate_thumbnail(os.path.join(self.filepath, f))
+                }
+                for f in files
+            ], len(files)
 
-    def render(self, url, page=1, page_size=10):
+    def render(self, page=1, page_size=10):
         """
         Get a context renderable version of this Gallery.
         Supports paginating the image gallery
 
         @return: a dictionary used for view context related to the pagination of the gallery
         """
-        
-        images = [
-            {
-                'path': url + "{}{}".format(self.path, f)[len(app.config['ROOT_DIRECTORY']):],
-                'thumbnail': Gallery._read_exif(os.path.join(self.path, f))['thumbnail']
-            }
-            for f in self.files
-        ]
-        pages = math.ceil(len(images) / page_size)
+
+        images, count = self.files
+        pages = math.ceil(count / page_size)
+
+        if app.config['USE_MONGO']:
+            images = images.skip(0 if page <= 1 else ((page-1)*page_size)).limit(page_size)
+        else:
+            images = images[(page-1)*page_size:page*page_size]
 
         return {
-            'total': len(images),
-            'images': images[(page-1)*page_size:page*page_size],
+            'total': count,
+            'images': list(images),
             'meta': self.meta
         }, pages
 

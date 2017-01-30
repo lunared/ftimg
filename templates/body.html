@@ -139,10 +139,12 @@
         <div class="container">
             <div class="info">
                 <div class="thumbnail">
-                    {% if gallery.meta.thumbnail %}
-                        <img src="{{ gallery.meta.thumbnail }}" width="100%" />
-                    {% else %}
-                        <img src="{{ gallery.images[0].thumbnail }}" width="100%" />
+                    {% if (gallery.images|length) > 0 %}
+                        {% if gallery.meta.thumbnail %}
+                            <img src="{{ gallery.meta.thumbnail }}" width="100%" />
+                        {% else %}
+                            <img src="{{ gallery.images[0].thumbnail }}" width="100%" />
+                        {% endif %}
                     {% endif %}
                 </div>
                 <div class="meta">
@@ -158,8 +160,8 @@
                     <span>{{ ', '.join(gallery.meta.artist) }}</span>
                     <br/>
                     <label>Tags: </label>
-                    {% for tag in gallery.meta['tags'] %}
-                        <a href="#" class="tag">{{ tag }}</a>
+                    {% for tag in gallery.meta.tags %}
+                        <a href="/?search={{tag}}" class="tag">{{ tag }}</a>
                     {% endfor %}
                     <br/>
                     <label>Pages: </label>
@@ -194,12 +196,12 @@
             </fieldset>
             <table class="gallery">
                 <tbody>
-                    {% for i in range((gallery['images']|length) // 5) %}
+                    {% for i in range((gallery.images|length) // 5) %}
                     <tr>
-                        {% for image in gallery['images'][i*5:min((i+1) * 5, (gallery['images']|length))] %}
+                        {% for image in gallery.images[i*5:min((i+1) * 5, (gallery.images|length))] %}
                         <td>
-                            <a onclick="showImage('{{ image["path"] }}')">
-                                <img src="{{image['thumbnail']}}" width="95%" />
+                            <a onclick="showImage('{{url}}{{image._id}}')">
+                                <img src="{{image.thumbnail}}" width="95%" />
                             </a>
                         </td>
                         {% endfor %}

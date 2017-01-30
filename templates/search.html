@@ -110,12 +110,14 @@
                         {% endfor %}
                     </label>
                 </div>
+                {% if can_search %}
                 <form class="control-group" method="GET" action="/">
                     <input type="text" name="search" value="{{search}}" />
                     <button type="submit">
                         Search
                     </button>
                 </form>
+                {% endif %}
                 <div class="control-group paginator">
                     <a href="{{'{}?page=1&pagesize={}'.format(path, pagesize)}}"><<</a>
                     <a href="{{'{}?page={}&pagesize={}'.format(path, prevpage, pagesize)}}"><</a>
@@ -135,8 +137,12 @@
                     {% for g in galleries %}
                         <tr>        
                             <td>
-                                <a href="{{g['path']}}">
-                                    {{g['title']}}
+                                <a href="{{g._id}}">
+                                    {% if is_dict(g.title) %}
+                                        {{ g.title.localized }}
+                                    {% else %}
+                                        {{ g.title }}
+                                    {% endif %}
                                 </a>
                             </td>
                         </tr>
