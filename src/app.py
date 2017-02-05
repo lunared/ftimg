@@ -5,6 +5,7 @@ Main app references
 from flask import Flask, render_template, request, send_from_directory, abort, send_file
 from flask_pymongo import PyMongo
 from . import settings
+import math
 
 app = Flask('ftimg',)
 app.config.update(
@@ -22,6 +23,7 @@ def setup():
 
     app.jinja_env.globals.update(min=min)
     app.jinja_env.globals.update(max=max)
+    app.jinja_env.globals.update(ceil=math.ceil)
     app.jinja_env.globals.update(is_array=lambda x: isinstance(x, list))
     app.jinja_env.globals.update(is_dict=lambda x: isinstance(x, dict))
     app.jinja_env.globals.update(urlencode=urlencode)

@@ -10,7 +10,7 @@ import os
 import glob
 import datetime
 import yaml
-
+import pymongo
 from pymongo import MongoClient
 from src.gallery import Gallery
 from src import settings
@@ -100,12 +100,34 @@ def build_cache(database, now):
                         {
                             '$setOnInsert': {
                                 'modified': None,
-                                'title': os.path.basename(os.path.dirname(filename))
+                                'title': os.path.basename(os.path.dirname(filename)),
                             }
                         },
                         upsert=True
                     )
 
+    # for all galleries, generate a thumbnail
+    for gallery in database.galleries.find():
+        thumb = gallery.get('thumbnail', "")
+        if thumb.endswith("jpg") or thumb.endswith("png"):
+            path = os.path.join(settings.ROOT_DIRECTORY, gallery['_id'], thumb)
+            thumb = Gallery.generate_thumbnail(path)
+        else:
+            thumb = database.pages.find(
+                {
+                    'gallery': gallery['_id'],
+                }
+            ).sort("_id", pymongo.ASCENDING)[0]['thumbnail']
+        database.galleries.update_one(
+            {
+                '_id': gallery['_id'],
+            },
+            {
+                '$set': {
+                    'thumbnail': thumb
+                }
+            }
+        )
 
 def clean_cache(database, now):
     """
