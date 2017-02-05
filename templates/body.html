@@ -4,14 +4,6 @@
         <title>FTIMG - {{path or '/'}}</title>
         <meta name=viewport content="width=device-width, initial-scale=1">
         <style>
-            @keyframes marquee {
-                0%, 20%   { transform: translate(0%, 0); }
-                85%  { transform: translate(-100%, 0); }
-                86%  { transform: translate(-100%, 100%);}
-                87%, 95%  { transform: translate(-0%, 100%);}
-                100% { transform: translate(0%, 0); }
-            }
-
             html, body {
                 padding: 0;
                 margin: 0;
@@ -105,35 +97,7 @@
              .gallery a:hover {
                 cursor: pointer;
              }
-
-             /**
-              * Full-window view of a page in the gallery
-              */
-             .preview {
-                 position: fixed;
-                 top: 0;
-                 bottom: 0;
-                 left: 0;
-                 right: 0;
-                 text-align: center;
-                 overflow: scroll;
-                 pointer-events: none;
-                 background: rgba(0,0,0,.8);
-                 transition: opacity .2s linear;
-                 opacity: 0;
-                 padding: 2rem;
-             }
-
-             .preview.show {
-                 pointer-events: fill;
-                 opacity: 1;
-             }
-
-             .preview img {
-                 max-width: 100%;
-             }
         </style>
-
     </head>
     <body>
         <div class="container">
@@ -192,9 +156,9 @@
                 <tbody>
                     {% for i in range(ceil((gallery.images|length) / 5)) %}
                     <tr>
-                        {% for image in gallery.images[i*5:min((i+1) * 5, (gallery.images|length))] %}
+                        {% for n, image in enumerate(gallery.images[i*5:min((i+1) * 5, (gallery.images|length))]) %}
                         <td>
-                            <a onclick="showImage('{{url}}{{image._id}}')">
+                            <a href="{{path}}/{{(page - 1) * pagesize + (i*5) + n + 1}}">
                                 <img src="{{image.thumbnail}}" width="95%" />
                             </a>
                         </td>
@@ -210,24 +174,5 @@
                 <a href="https://github.com/nhydock/ftimg" class="pull-right">Powered by ftimg</a>
             </h4>
         </div>
-
-        <div id="preview" class="preview" onclick="hidePreview()">
-            <div class="overlay"></div>
-            <img id="fullPreview" src="" />
-        </div>
-
-        <!-- full image previewer/gallery -->
-        <script>
-            function showImage(url) {
-                document.getElementById("fullPreview").src = url;
-                document.getElementById("preview").classList.add("show");
-                document.getElementsByTagName("body")[0].classList.add("lock");
-            }
-
-            function hidePreview() {
-                document.getElementById("preview").classList.remove("show");
-                document.getElementsByTagName("body")[0].classList.remove("lock");
-            }
-        </script>
     </body>
 </html>

@@ -34,6 +34,25 @@ def gallery(path=None):
         'prevpage': max(page-1, 1)
     }), 200
 
+
+@app.route('/<path:path>/<int:page>')
+def preview(path=None, page=1):
+    """
+    View a single image in a gallery
+    """
+    context, pages = Gallery(path).render_single_image(page-1)
+    return render_template("page.html", **{
+        'directory': path,
+        'url': request.url_root,
+        'path': request.base_url,
+        'page': page,
+        'pages': pages,
+        'nextpage': min(page+1, pages),
+        'prevpage': max(page-1, 1),
+        **context,
+    }), 200
+
+
 @app.route('/')
 def search():
     """

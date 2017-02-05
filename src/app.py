@@ -27,6 +27,8 @@ def setup():
     app.jinja_env.globals.update(is_array=lambda x: isinstance(x, list))
     app.jinja_env.globals.update(is_dict=lambda x: isinstance(x, dict))
     app.jinja_env.globals.update(urlencode=urlencode)
+    app.jinja_env.globals.update(enumerate=enumerate)
+    
 
     if settings.USE_MONGO:
         # check connection

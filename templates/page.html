@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>FTIMG - {{path or '/'}}</title>
+        <meta name=viewport content="width=device-width, initial-scale=1">
+        <style>
+            html, body {
+                padding: 0;
+                margin: 0;
+                background: black;
+                color: white;
+                font-family: monospace;
+            }
+
+            a {
+                color: white;
+            }
+
+            body.lock {
+                overflow: hidden;
+            }
+
+            .container {
+                width: 100%;
+                max-width: 960px;
+                margin: auto;
+                box-sizing: border-box;
+                padding: 0.83em;
+                margin-top: 40px;
+            }
+
+            .footer {
+                margin-right: 2px;
+            }
+
+            .center {
+                text-align: center;
+            }
+
+            .pull-right {
+                float: right;
+            }
+
+            #controls a {
+                color: white;
+                text-decoration: none;
+            }
+
+            #controls a.active {
+                text-decoration: underline;
+            }
+
+            .clickable:hover {
+                cursor: pointer;
+            }
+
+            .paginator {
+                display: block;
+            }
+
+            /**
+             * Gallery block
+             */
+             .preview {
+                width: 100%;
+             }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <fieldset id="controls">
+                <legend>Controls</legend>
+                <form class="pull-right" onsubmit="gotoPage(event)">
+                    <input name="go" type="number" min="1" max="{{pages}}" />
+                    <button type="submit">Go</button>
+                </form>
+                <label class="paginator center">
+                    <a href="/{{gallery}}/1"><<</a>
+                    <a href="/{{gallery}}/{{prevpage}}"><</a>
+                    {% for p in range(max(1, page-2), min(page+3, pages+1)) %}
+                    <a href="/{{gallery}}/{{p}}"
+                        {% if p == page %}
+                            class="active"
+                        {% endif %}
+                    >{{p}}</a>
+                    {% endfor %}
+                    <a href="/{{gallery}}/{{nextpage}}">></a>
+                    <a href="/{{gallery}}/{{pages}}">>></a>
+                </label>
+            </fieldset>
+            <div class="preview">
+                <img src="/{{image._id}}" width="100%" onclick="nav(event)" class="clickable" />
+            </div>
+            <h4 class="footer">
+                <a href="/{{gallery}}">
+                    Return to Gallery
+                </a>
+                <a href="https://github.com/nhydock/ftimg" class="pull-right">Powered by ftimg</a>
+            </h4>
+        </div>
+
+        <script type="text/javascript">
+            function nav(event) {
+                // on left click only
+                if (event.button == 0) {
+                    let img = event.target;
+                    // on left side, navigate previous
+                    if (event.offsetX < img.clientWidth / 3.0) {
+                        window.location.href = "/{{gallery}}/{{prevpage}}";
+                    }
+                    else if (event.offsetX > img.clientWidth * 2.0 / 3.0) {
+                        window.location.href = "/{{gallery}}/{{nextpage}}";
+                    }
+                }
+            }
+
+            function gotoPage(event) {
+                event.preventDefault();
+                let form = event.target;
+                window.location.href = "/{{gallery}}/" + form.go.value;
+            }
+        </script>
+    </body>
+</html>

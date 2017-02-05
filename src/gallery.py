@@ -109,6 +109,23 @@ class Gallery(object):
                 for f in files
             ], len(files)
 
+    def get_page(self, page):
+        if app.config['USE_MONGO']:
+            files = mongo.db.pages.find(
+                {'gallery': self.path},
+                {'_id': 1}
+            ).sort([('_id', pymongo.ASCENDING)])
+            return files[page], files.count()
+        else:
+            files = [f for f in os.listdir(self.filepath) if app.config['FORMAT_MATCH'].search(f)]
+            files.sort()
+            return [
+                {
+                    '_id': "{}{}".format(self.path, f)[len(app.config['ROOT_DIRECTORY']):]
+                }
+                for f in files
+            ][page], len(files)
+
     def render(self, page=1, page_size=10):
         """
         Get a context renderable version of this Gallery.
@@ -131,3 +148,14 @@ class Gallery(object):
             'meta': self.meta
         }, pages
 
+    def render_single_image(self, page=1):
+        """
+        Get a context renderable version of a single page of the gallery
+        """
+        page, count = self.get_page(page)
+
+        return {
+            'total': count,
+            'image': page,
+            'gallery': self.path
+        }, count
